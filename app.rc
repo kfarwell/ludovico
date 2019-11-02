@@ -1,0 +1,52 @@
+fn conf_enable_directory {
+    conf_enable_app directory
+}
+
+fn directory_init {
+    ll_add handlers_bar_left tpl_handler apps/directory/sidebar_controls.tpl
+
+    if(~ $req_path /playing  ||
+       ~ $req_path /making   ||
+       ~ $req_path /watching ||
+       ~ $req_path /doing)
+        handler_body_main=(tpl_handler `{get_lib_file directory/verb.tpl apps/directory/verb.tpl})
+
+    if not if(~ $req_path /playing/*  ||
+              ~ $req_path /making/*   ||
+              ~ $req_path /watching/* ||
+              ~ $req_path /doing/*)
+        handler_body_main=(tpl_handler `{get_lib_file directory/thing.tpl apps/directory/thing.tpl})
+
+    if not if(~ $req_path /publish &&
+              {~ $"post_arg_verb playing  ||
+               ~ $"post_arg_verb making   ||
+               ~ $"post_arg_verb watching ||
+               ~ $"post_arg_verb doing} &&
+              ! ~ $"post_arg_thing '' &&
+              ! ~ $"post_arg_name '' &&
+              ! ~ $"post_arg_url '' &&
+              ! ~ $"post_arg_viewers '') {
+        verb=$post_arg_verb
+        thing=`{echo $post_arg_thing | sed 's/ /_/g; s/[^a-zA-Z0-9_]//g'}
+        thingf=$post_arg_thing
+        name=`{echo $post_arg_name | sed 's/ /_/g; s/[^a-zA-Z0-9_]//g'}
+        namef=$post_arg_name
+        url=$post_arg_url
+        viewers=$post_arg_viewers
+        ldir=$sitedir/_werc/ludovico
+        ndir=$ldir/$verb/$thing/$name
+
+        if(! test -d $ndir) {
+            rm -r $ldir/*/*/$name
+            mkdir -p $ndir
+        }
+        if(! test -f $ldir/$verb/$thing/.formatted)
+            echo $thingf > $ldir/$verb/$thing/.formatted
+        if(! test -f $ndir/formatted)
+            echo $namef > $ndir/formatted
+        if(! test -f $ndir/url)
+            echo $url > $ndir/url
+        echo $viewers > $ndir/viewers
+        date -n > $ndir/heartbeat
+    }
+}

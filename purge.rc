@@ -1,0 +1,6 @@
+#!/usr/local/plan9/bin/rc
+ldir=/var/www/werc/sites/ludovico.kfarwell.org/_werc/ludovico
+
+for(streamer in `{ls $ldir/*/* | sed '/\/\.[^\/]/d'})
+    if(~ 1 `{awk '{print ('`{date -n}^' - '`{cat $streamer/heartbeat}^' > 420)}'})
+        rm -r $streamer
